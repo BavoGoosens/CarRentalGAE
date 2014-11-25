@@ -1,12 +1,21 @@
 package ds.gae.entities;
 
 import javax.persistence.*;
+
+import com.google.appengine.api.datastore.Key;
+
 import java.io.Serializable;
 import java.util.Date;
 
+@Entity
 @MappedSuperclass
 public class Quote implements Serializable{
 
+	@Id
+	@GeneratedValue(strategy=
+			GenerationType.IDENTITY)
+	private Key id;
+	
 	@Temporal(TemporalType.DATE)
     private Date startDate;
 	@Temporal(TemporalType.DATE)

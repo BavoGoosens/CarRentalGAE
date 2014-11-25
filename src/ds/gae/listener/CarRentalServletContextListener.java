@@ -22,57 +22,59 @@ import ds.gae.entities.CarType;
 
 public class CarRentalServletContextListener implements ServletContextListener {
 
-	private EntityManager em;
-
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
 		// This will be invoked as part of a warming request, 
 		// or the first user request if no warming request was invoked.
-						
+
 		// check if dummy data is available, and add if necessary
-		this.em = EMF.get().createEntityManager();
 		if(!isDummyDataAvailable()) {
 			addDummyData();
 		}
 	}
-	
+
 	private boolean isDummyDataAvailable() {
+		EntityManager em = EMF.get().createEntityManager();
 		// If the Hertz car rental company is in the datastore, we assume the dummy data is available
+		boolean b = false;
 		try {
-			em.find(CarRentalCompany.class, "Hertz");
-			return true;
-		}catch (IllegalArgumentException ex){
-			return false;
+			b =  em.find(CarRentalCompany.class, "Hertz") != null;
+		} finally{
+			em.close();
+			return b;
 		}
 		// use persistence instead
 		//return CarRentalModel.get().CRCS.containsKey("Hertz");
 	}
-	
+
 	private void addDummyData() {
 		loadRental("Hertz","hertz.csv");
-        loadRental("Dockx","dockx.csv");
+		loadRental("Dockx","dockx.csv");
 	}
-	
+
 	private void loadRental(String name, String datafile) {
 		Logger.getLogger(CarRentalServletContextListener.class.getName()).log(Level.INFO, "loading {0} from file {1}", new Object[]{name, datafile});
-        try {
-        	
-            Set<Car> cars = loadData(name, datafile);
-            CarRentalCompany company = new CarRentalCompany(name, cars);
-            
-			em.persist(company);
-            //CarRentalModel.get().CRCS.put(name, company);
+		EntityManager em = EMF.get().createEntityManager();
+		try {
 
-        } catch (NumberFormatException ex) {
-            Logger.getLogger(CarRentalServletContextListener.class.getName()).log(Level.SEVERE, "bad file", ex);
-        } catch (IOException ex) {
-            Logger.getLogger(CarRentalServletContextListener.class.getName()).log(Level.SEVERE, null, ex);
-        }
+			Set<Car> cars = loadData(name, datafile);
+			CarRentalCompany company = new CarRentalCompany(name, cars);
+
+			em.persist(company);
+			//CarRentalModel.get().CRCS.put(name, company);
+
+		} catch (NumberFormatException ex) {
+			Logger.getLogger(CarRentalServletContextListener.class.getName()).log(Level.SEVERE, "bad file", ex);
+		} catch (IOException ex) {
+			Logger.getLogger(CarRentalServletContextListener.class.getName()).log(Level.SEVERE, null, ex);
+		} finally {
+			em.close();
+		}
 	}
-	
+
 	public static Set<Car> loadData(String name, String datafile) throws NumberFormatException, IOException {
 		// adapt the implementation of this method to your entity structure
-		
+
 		Set<Car> cars = new HashSet<Car>();
 		int carId = 1;
 
