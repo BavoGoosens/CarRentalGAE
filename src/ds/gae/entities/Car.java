@@ -1,21 +1,32 @@
 package ds.gae.entities;
 
+import com.google.appengine.api.datastore.Key;
+
+import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Car {
+@Entity
+public class Car implements Serializable {
 
-    private int id;
+    @Id
+    @GeneratedValue(strategy=
+            GenerationType.IDENTITY)
+    private Key id;
+    @ManyToOne
     private CarType type;
+    @OneToMany(cascade = CascadeType.ALL)
     private Set<Reservation> reservations;
 
     /***************
      * CONSTRUCTOR *
      ***************/
-    
+
+    public Car(){};
+
     public Car(int uid, CarType type) {
-    	this.id = uid;
         this.type = type;
         this.reservations = new HashSet<Reservation>();
     }
@@ -24,7 +35,7 @@ public class Car {
      * ID *
      ******/
     
-    public int getId() {
+    public Key getId() {
     	return id;
     }
     

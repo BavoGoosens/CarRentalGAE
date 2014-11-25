@@ -1,18 +1,34 @@
 package ds.gae.entities;
 
-public class CarType {
-    
+import com.google.appengine.api.datastore.Key;
+
+import javax.persistence.*;
+import java.io.Serializable;
+
+@Entity
+public class CarType implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy=
+            GenerationType.IDENTITY)
+    private Key id;
+    @Basic
     private String name;
+    @Basic
     private int nbOfSeats;
+    @Basic
     private boolean smokingAllowed;
+    @Basic
     private double rentalPricePerDay;
     //trunk space in liters
+    @Basic
     private float trunkSpace;
     
     /***************
 	 * CONSTRUCTOR *
 	 ***************/
-    
+    public CarType(){};
+
     public CarType(String name, int nbOfSeats, float trunkSpace, double rentalPricePerDay, boolean smokingAllowed) {
         this.name = name;
         this.nbOfSeats = nbOfSeats;

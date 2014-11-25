@@ -1,19 +1,30 @@
 package ds.gae.entities;
 
+import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Date;
 
-public class Quote {
+@MappedSuperclass
+public class Quote implements Serializable{
 
+	@Temporal(TemporalType.DATE)
     private Date startDate;
-    private Date endDate;
+	@Temporal(TemporalType.DATE)
+	private Date endDate;
+	@Basic
     private String carRenter;
+	@Basic
     private String rentalCompany;
+	@Basic
     private String carType;
+	@Basic
     private double rentalPrice;
     
     /***************
 	 * CONSTRUCTOR *
 	 ***************/
+
+	Quote(){};
 
     Quote(String carRenter, Date start, Date end, String rentalCompany, String carType, double rentalPrice) {
         this.carRenter = carRenter;

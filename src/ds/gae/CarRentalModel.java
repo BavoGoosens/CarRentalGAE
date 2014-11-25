@@ -1,22 +1,23 @@
 package ds.gae;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import com.google.appengine.api.datastore.Key;
 import ds.gae.entities.Car;
 import ds.gae.entities.CarRentalCompany;
 import ds.gae.entities.CarType;
 import ds.gae.entities.Quote;
 import ds.gae.entities.Reservation;
 import ds.gae.entities.ReservationConstraints;
- 
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+
 public class CarRentalModel {
 	
-	public Map<String,CarRentalCompany> CRCS = new HashMap<String, CarRentalCompany>();	
+	// public Map<String,CarRentalCompany> CRCS = new HashMap<String, CarRentalCompany>();
+
+	private EntityManager em = EMF.get().createEntityManager();
 	
 	private static CarRentalModel instance;
 	
@@ -35,8 +36,17 @@ public class CarRentalModel {
 	 * 			in the given car rental company.
 	 */
 	public Set<String> getCarTypesNames(String crcName) {
-		// TODO add implementation
-    	return null;
+		Query query = em.createQuery(
+				          "SELECT crc.carTypes "
+						+ "FROM CarRentalCompany crc "
+						+ "WHERE crc.name = :name");
+		query.setParameter("name", crcName);
+		List<CarType> types = query.getResultList();
+		Set<String>  names = new HashSet<>();
+		for (CarType type: types) {
+			names.add(type.getName());
+		}
+		return names;
 	}
 
     /**
@@ -45,10 +55,19 @@ public class CarRentalModel {
      * @return	the list of car rental companies
      */
     public Collection<String> getAllRentalCompanyNames() {
-		// FIXME use persistence instead
-    	return CRCS.keySet();
+		Query query = em.createQuery("SELECT c.name FROM CarRentalCompany c");
+		List<String> comps = query.getResultList();
+		return comps;
     }
-	
+
+	private CarRentalCompany getCompany(String companyName) {
+		try {
+			return this.em.find(CarRentalCompany.class, companyName);
+		} catch (Exception e){
+			return  null;
+		}
+	}
+
 	/**
 	 * Create a quote according to the given reservation constraints (tentative reservation).
 	 * 
@@ -64,10 +83,9 @@ public class CarRentalModel {
 	 * 			No car available that fits the given constraints.
 	 */
     public Quote createQuote(String company, String renterName, ReservationConstraints constraints) throws ReservationException {
-		// FIXME: use persistence instead
-    	
-    	CarRentalCompany crc = CRCS.get(company);
-    	Quote out = null;
+    	CarRentalCompany crc = this.getCompany(company);
+
+		Quote out = null;
 
         if (crc != null) {
             out = crc.createQuote(constraints, renterName);
@@ -88,9 +106,7 @@ public class CarRentalModel {
 	 * 			Confirmation of given quote failed.	
 	 */
 	public void confirmQuote(Quote q) throws ReservationException {
-		// FIXME: use persistence instead
-
-		CarRentalCompany crc = CRCS.get(q.getRentalCompany());
+		CarRentalCompany crc = this.getCompany(q.getRentalCompany());
         crc.confirmQuote(q);
 	}
 	
@@ -105,9 +121,17 @@ public class CarRentalModel {
 	 * 			One of the quotes cannot be confirmed. 
 	 * 			Therefore none of the given quotes is confirmed.
 	 */
-    public List<Reservation> confirmQuotes(List<Quote> quotes) throws ReservationException {    	
-		// TODO add implementation
-    	return null;
+    public List<Reservation> confirmQuotes(List<Quote> quotes) throws ReservationException {
+		List<Reservation> reservations = new ArrayList<>();
+		try {
+			for (Quote q : quotes){
+				CarRentalCompany crc = this.getCompany(q.getRentalCompany());
+				reservations.add(crc.confirmQuote(q));
+			}
+		} catch (ReservationException e){
+			e.printStackTrace();
+		}
+		return reservations;
     }
 	
 	/**
@@ -118,21 +142,12 @@ public class CarRentalModel {
 	 * @return	the list of reservations of the given car renter
 	 */
 	public List<Reservation> getReservations(String renter) {
-		// FIXME: use persistence instead
-		
-		List<Reservation> out = new ArrayList<Reservation>();
-		
-    	for (CarRentalCompany crc : CRCS.values()) {
-    		for (Car c : crc.getCars()) {
-    			for (Reservation r : c.getReservations()) {
-    				if (r.getCarRenter().equals(renter)) {
-    					out.add(r);
-    				}
-    			}
-    		}
-    	}
-    	
-    	return out;
+		Query query = em.createQuery(" SELECT r " +
+				"FROM Reservation r " +
+				"WHERE r.carRenter = :renter");
+		query.setParameter("renter", renter);
+		List<Reservation> result = query.getResultList();
+		return result;
     }
 
     /**
@@ -143,11 +158,12 @@ public class CarRentalModel {
      * @return	The list of car types in the given car rental company.
      */
     public Collection<CarType> getCarTypesOfCarRentalCompany(String crcName) {
-		// FIXME: use persistence instead
-
-    	CarRentalCompany crc = CRCS.get(crcName);
-    	Collection<CarType> out = new ArrayList<CarType>(crc.getAllCarTypes());
-        return out;
+		Query query = em.createQuery("SELECT crc.carTypes " +
+				"FROM CarRentalCompany crc " +
+				"WHERE crc.name = :name");
+		query.setParameter("name", crcName);
+		List<CarType> carTypes = query.getResultList();
+    	return carTypes;
     }
 	
     /**
@@ -159,8 +175,8 @@ public class CarRentalModel {
      * 			the given car type
      * @return	A list of car IDs of cars with the given car type.
      */
-    public Collection<Integer> getCarIdsByCarType(String crcName, CarType carType) {
-    	Collection<Integer> out = new ArrayList<Integer>();
+    public Collection<Key> getCarIdsByCarType(String crcName, CarType carType) {
+    	Collection<Key> out = new ArrayList<Key>();
     	for (Car c : getCarsByCarType(crcName, carType)) {
     		out.add(c.getId());
     	}
@@ -190,16 +206,12 @@ public class CarRentalModel {
 	 * @return	List of cars of the given car type
 	 */
 	private List<Car> getCarsByCarType(String crcName, CarType carType) {				
-		// FIXME: use persistence instead
-
-		List<Car> out = new ArrayList<Car>(); 
-		for(CarRentalCompany crc : CRCS.values()) {
-			for (Car c : crc.getCars()) {
-				if (c.getType() == carType) { 
-					out.add(c);
-				}
-			}
-		}
+		Query query = em.createQuery("SELECT c " +
+				"FROM CarRentalCompany crc JOIN crc.cars c " +
+				"WHERE crc.name = :name AND c.type = :ty");
+		query.setParameter("name", crcName);
+		query.setParameter("ty", carType);
+		List<Car> out = query.getResultList();
 		return out;
 	}
 

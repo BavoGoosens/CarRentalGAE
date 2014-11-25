@@ -9,15 +9,20 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import ds.gae.CarRentalModel;
+import ds.gae.EMF;
 import ds.gae.entities.Car;
 import ds.gae.entities.CarRentalCompany;
 import ds.gae.entities.CarType;
 
 public class CarRentalServletContextListener implements ServletContextListener {
+
+	private EntityManager em;
 
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
@@ -25,6 +30,7 @@ public class CarRentalServletContextListener implements ServletContextListener {
 		// or the first user request if no warming request was invoked.
 						
 		// check if dummy data is available, and add if necessary
+		this.em = EMF.get().createEntityManager();
 		if(!isDummyDataAvailable()) {
 			addDummyData();
 		}
@@ -32,10 +38,14 @@ public class CarRentalServletContextListener implements ServletContextListener {
 	
 	private boolean isDummyDataAvailable() {
 		// If the Hertz car rental company is in the datastore, we assume the dummy data is available
-
-		// FIXME: use persistence instead
-		return CarRentalModel.get().CRCS.containsKey("Hertz");
-
+		try {
+			em.find(CarRentalCompany.class, "Hertz");
+			return true;
+		}catch (IllegalArgumentException ex){
+			return false;
+		}
+		// use persistence instead
+		//return CarRentalModel.get().CRCS.containsKey("Hertz");
 	}
 	
 	private void addDummyData() {
@@ -50,8 +60,8 @@ public class CarRentalServletContextListener implements ServletContextListener {
             Set<Car> cars = loadData(name, datafile);
             CarRentalCompany company = new CarRentalCompany(name, cars);
             
-    		// FIXME: use persistence instead
-            CarRentalModel.get().CRCS.put(name, company);
+			em.persist(company);
+            //CarRentalModel.get().CRCS.put(name, company);
 
         } catch (NumberFormatException ex) {
             Logger.getLogger(CarRentalServletContextListener.class.getName()).log(Level.SEVERE, "bad file", ex);
@@ -61,13 +71,14 @@ public class CarRentalServletContextListener implements ServletContextListener {
 	}
 	
 	public static Set<Car> loadData(String name, String datafile) throws NumberFormatException, IOException {
-		// FIXME: adapt the implementation of this method to your entity structure
+		// adapt the implementation of this method to your entity structure
 		
 		Set<Car> cars = new HashSet<Car>();
 		int carId = 1;
 
 		//open file from jar
-		BufferedReader in = new BufferedReader(new InputStreamReader(CarRentalServletContextListener.class.getClassLoader().getResourceAsStream(datafile)));
+		BufferedReader in = new BufferedReader(new InputStreamReader(CarRentalServletContextListener.class.getClassLoader()
+				.getResourceAsStream(datafile)));
 		//while next line exists
 		while (in.ready()) {
 			//read line
