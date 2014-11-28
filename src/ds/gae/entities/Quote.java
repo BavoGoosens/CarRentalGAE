@@ -1,39 +1,32 @@
 package ds.gae.entities;
 
-import javax.persistence.*;
+import java.util.Date;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import com.google.appengine.api.datastore.Key;
 
-import java.io.Serializable;
-import java.util.Date;
-
-@Entity
 @MappedSuperclass
-public class Quote implements Serializable{
+public class Quote {
 
-	@Id
-	@GeneratedValue(strategy=
-			GenerationType.IDENTITY)
-	private Key id;
-	
 	@Temporal(TemporalType.DATE)
     private Date startDate;
 	@Temporal(TemporalType.DATE)
-	private Date endDate;
-	@Basic
+    private Date endDate;
     private String carRenter;
-	@Basic
     private String rentalCompany;
-	@Basic
     private String carType;
-	@Basic
     private double rentalPrice;
     
     /***************
 	 * CONSTRUCTOR *
 	 ***************/
-
-	Quote(){};
 
     Quote(String carRenter, Date start, Date end, String rentalCompany, String carType, double rentalPrice) {
         this.carRenter = carRenter;

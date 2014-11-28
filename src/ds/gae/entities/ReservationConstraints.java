@@ -3,6 +3,7 @@ package ds.gae.entities;
 import java.io.Serializable;
 import java.util.Date;
 
+@SuppressWarnings("serial")
 public class ReservationConstraints implements Serializable{
     
     private Date startDate;

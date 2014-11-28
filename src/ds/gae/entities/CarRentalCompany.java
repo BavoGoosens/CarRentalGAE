@@ -1,6 +1,5 @@
 package ds.gae.entities;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -12,35 +11,39 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
+
 import com.google.appengine.api.datastore.Key;
+
 import ds.gae.ReservationException;
 
-import javax.persistence.*;
-
 @Entity
-public class CarRentalCompany implements Serializable{
+public class CarRentalCompany {
 
 	@Transient
 	private static Logger logger = Logger.getLogger(CarRentalCompany.class.getName());
+	
 	@Id
 	private String name;
-	@OneToMany(cascade = CascadeType.ALL)
-	private Set<Car> cars;
-	@OneToMany(cascade = CascadeType.ALL)
-	private Map<String,CarType> carTypes = new HashMap<String, CarType>();
-
+	
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	private Set<CarType> cartypes = new HashSet<CarType>();
+	
 	/***************
 	 * CONSTRUCTOR *
 	 ***************/
+	
+	public CarRentalCompany() {}
 
-	public CarRentalCompany(){};
-
-	public CarRentalCompany(String name, Set<Car> cars) {
+	public CarRentalCompany(String name, Set<CarType> carTypes) {
 		logger.log(Level.INFO, "<{0}> Car Rental Company {0} starting up...", name);
 		setName(name);
-		this.cars = cars;
-		for(Car car:cars)
-			carTypes.put(car.getType().getName(), car.getType());
+		this.cartypes = carTypes;
 	}
 
 	/********
@@ -60,27 +63,47 @@ public class CarRentalCompany implements Serializable{
 	 *************/
 
 	public Collection<CarType> getAllCarTypes() {
-		return carTypes.values();
+		return this.cartypes;
 	}
 	
-	public CarType getCarType(String carTypeName) {
-		if(carTypes.containsKey(carTypeName))
-			return carTypes.get(carTypeName);
+	public CarType getCarTypeByKey(Key carTypeName) {
+		Collection<CarType> carTypes = this.getAllCarTypes();
+		for( CarType c : carTypes){
+			if(c.getID().getId() == carTypeName.getId())
+				return c;
+		}
 		throw new IllegalArgumentException("<" + carTypeName + "> No car type of name " + carTypeName);
+	}
+	
+	private boolean containsCarType(String carTypeName){
+		Collection<CarType> carTypes = this.getAllCarTypes();
+		for( CarType c : carTypes){
+			if(c.getName().equalsIgnoreCase(carTypeName))
+				return true;
+		}
+		return false;
 	}
 	
 	public boolean isAvailable(String carTypeName, Date start, Date end) {
 		logger.log(Level.INFO, "<{0}> Checking availability for car type {1}", new Object[]{name, carTypeName});
-		if(carTypes.containsKey(carTypeName))
-			return getAvailableCarTypes(start, end).contains(carTypes.get(carTypeName));
+		if(this.containsCarType(carTypeName))
+			return getAvailableCarTypes(start, end).contains(getCarTypeByString(carTypeName));
 		throw new IllegalArgumentException("<" + carTypeName + "> No car type of name " + carTypeName);
 	}
 	
+	private CarType getCarTypeByString(String carTypeName) {
+		for(CarType t : this.cartypes){
+			if (t.getName().equalsIgnoreCase(carTypeName))
+				return t;
+		}
+		return null;
+	}
+
 	public Set<CarType> getAvailableCarTypes(Date start, Date end) {
 		Set<CarType> availableCarTypes = new HashSet<CarType>();
-		for (Car car : cars) {
+		for (Car car : this.getCars()) {
 			if (car.isAvailable(start, end)) {
-				availableCarTypes.add(car.getType());
+				availableCarTypes.add(this.getCarTypeByString(car.getType()));
 			}
 		}
 		return availableCarTypes;
@@ -90,22 +113,36 @@ public class CarRentalCompany implements Serializable{
 	 * CARS *
 	 *********/
 	
-	private Car getCar(Key uid) {
-		for (Car car : cars) {
-			if (car.getId() == uid)
-				return car;
+	private Car getCar(Key k) {
+		Set<Car> cars = this.getCars();
+		for (Car c : cars){
+			if (c.getId().equals(k))
+				return c;
 		}
-		throw new IllegalArgumentException("<" + name + "> No car with uid " + uid);
+		throw new IllegalArgumentException("<" + name + "> No car with uid " + k.toString());
+	}
+	
+	private Car getCar(long k) {
+		Set<Car> cars = this.getCars();
+		for (Car c : cars){
+			if (c.getId().getId()  == k)
+				return c;
+		}
+		throw new IllegalArgumentException("<" + name + "> No car with uid " + k);
 	}
 	
 	public Set<Car> getCars() {
+		HashSet<Car> cars = new HashSet<Car>();
+		for (CarType type: this.cartypes){
+			cars.addAll(type.getCars());
+		}
     	return cars;
     }
 	
 	private List<Car> getAvailableCars(String carType, Date start, Date end) {
 		List<Car> availableCars = new LinkedList<Car>();
-		for (Car car : cars) {
-			if (car.getType().getName().equals(carType) && car.isAvailable(start, end)) {
+		for (Car car : this.getCars()) {
+			if (car.getType().equals(carType) && car.isAvailable(start, end)) {
 				availableCars.add(car);
 			}
 		}
@@ -121,7 +158,7 @@ public class CarRentalCompany implements Serializable{
 		logger.log(Level.INFO, "<{0}> Creating tentative reservation for {1} with constraints {2}", 
                         new Object[]{name, client, constraints.toString()});
 		
-		CarType type = getCarType(constraints.getCarType());
+		CarType type = getCarTypeByString(constraints.getCarType());
 		
 		if(!isAvailable(constraints.getCarType(), constraints.getStartDate(), constraints.getEndDate()))
 			throw new ReservationException("<" + name
@@ -146,7 +183,7 @@ public class CarRentalCompany implements Serializable{
 	                + " are unavailable from " + quote.getStartDate() + " to " + quote.getEndDate());
 		Car car = availableCars.get((int)(Math.random()*availableCars.size()));
 		
-		Reservation res = new Reservation(quote, car.getId());
+		Reservation res = new Reservation(quote, car.getId().getId());
 		car.addReservation(res);
 		return res;
 	}

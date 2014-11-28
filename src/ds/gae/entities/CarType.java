@@ -1,40 +1,54 @@
 package ds.gae.entities;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+
 import com.google.appengine.api.datastore.Key;
 
-import javax.persistence.*;
-import java.io.Serializable;
-
 @Entity
-public class CarType implements Serializable {
-
-    @Id
+public class CarType {
+    
+	@Id
     @GeneratedValue(strategy=
             GenerationType.IDENTITY)
     private Key id;
-    @Basic
     private String name;
-    @Basic
     private int nbOfSeats;
-    @Basic
     private boolean smokingAllowed;
-    @Basic
     private double rentalPricePerDay;
     //trunk space in liters
-    @Basic
     private float trunkSpace;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Car> cars = new ArrayList<Car>();
     
     /***************
 	 * CONSTRUCTOR *
 	 ***************/
-    public CarType(){};
-
+    
     public CarType(String name, int nbOfSeats, float trunkSpace, double rentalPricePerDay, boolean smokingAllowed) {
         this.name = name;
         this.nbOfSeats = nbOfSeats;
         this.trunkSpace = trunkSpace;
         this.rentalPricePerDay = rentalPricePerDay;
         this.smokingAllowed = smokingAllowed;
+    }
+    
+    public Set<Car> getCars(){
+    	return new HashSet<Car>(this.cars);
+    }
+    
+    public void addCar(Car c){
+    	this.cars.add(c);
     }
 
     public String getName() {
@@ -55,6 +69,10 @@ public class CarType implements Serializable {
     
     public float getTrunkSpace() {
     	return trunkSpace;
+    }
+    
+    public Key getID(){
+    	return this.id;
     }
     
     /*************
@@ -84,10 +102,10 @@ public class CarType implements Serializable {
 		if (getClass() != obj.getClass())
 			return false;
 		CarType other = (CarType) obj;
-		if (name == null) {
-			if (other.name != null)
+		if (id == null) {
+			if (other.getID() != null)
 				return false;
-		} else if (!name.equals(other.name))
+		} else if (!id.equals(other.getID()))
 			return false;
 		return true;
 	}

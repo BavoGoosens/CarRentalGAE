@@ -1,34 +1,40 @@
 package ds.gae.entities;
 
-import com.google.appengine.api.datastore.Key;
-
-import javax.persistence.*;
-import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
-public class Car implements Serializable {
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
-    @Id
+import com.google.appengine.api.datastore.Key;
+
+@Entity
+public class Car {
+
+	@Id
     @GeneratedValue(strategy=
             GenerationType.IDENTITY)
     private Key id;
-    @ManyToOne
-    private CarType type;
-    @OneToMany(cascade = CascadeType.ALL)
-    private Set<Reservation> reservations;
+	
+    private String type;
+	
+	//@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Set<Reservation> reservations = new HashSet<Reservation>();
 
     /***************
      * CONSTRUCTOR *
      ***************/
-
-    public Car(){};
-
-    public Car(int uid, CarType type) {
+    
+    public Car(String type) {
         this.type = type;
-        this.reservations = new HashSet<Reservation>();
     }
 
     /******
@@ -43,8 +49,13 @@ public class Car implements Serializable {
      * CAR TYPE *
      ************/
     
-    public CarType getType() {
+    public String getType() {
         return type;
+    }
+    
+    @Override
+    public String toString() {
+    	return "Car of the type: " + this.type;
     }
 
     /****************

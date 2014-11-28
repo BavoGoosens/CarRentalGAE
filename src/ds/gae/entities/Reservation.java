@@ -1,27 +1,29 @@
 package ds.gae.entities;
 
-import com.google.appengine.api.datastore.Key;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
-import javax.persistence.*;
+import com.google.appengine.api.datastore.Key;
 
 @Entity
 public class Reservation extends Quote {
 
 	@Id
-	@GeneratedValue(strategy=
-			GenerationType.IDENTITY)
+    @GeneratedValue(strategy=
+            GenerationType.IDENTITY)
 	private Key id;
-
-	@Basic
-	private Key carId;
+	
+	@ManyToOne
+    private long carId;
     
     /***************
 	 * CONSTRUCTOR *
 	 ***************/
 
-	public Reservation(){};
-
-    Reservation(Quote quote, Key carId) {
+    Reservation(Quote quote, long carId) {
     	super(quote.getCarRenter(), quote.getStartDate(), quote.getEndDate(), 
     			quote.getRentalCompany(), quote.getCarType(), quote.getRentalPrice());
         this.carId = carId;
@@ -31,7 +33,11 @@ public class Reservation extends Quote {
      * ID *
      ******/
     
-    public Key getCarId() {
+    public Key getId(){
+    	return this.id;
+    }
+    
+    public long getCarId() {
     	return carId;
     }
     
@@ -49,7 +55,7 @@ public class Reservation extends Quote {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + (int) id.getId();
+		result = prime * result + (int) carId;
 		return result;
 	}
 
