@@ -3,16 +3,12 @@ package ds.gae.servlets;
 import java.io.IOException;
 import java.text.ParseException;
 
-import javax.persistence.EntityManager;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.appengine.api.datastore.Entity;
-
 import ds.gae.CarRentalModel;
-import ds.gae.EMF;
 import ds.gae.ReservationException;
 import ds.gae.entities.Quote;
 import ds.gae.entities.ReservationConstraints;
@@ -28,19 +24,15 @@ public class PersistTestServlet extends HttpServlet {
 		String companyName = "Hertz";
 		String userName = "Pieter A.";
 		
-		req.getSession().setAttribute("renter", userName);
-		
 		try {
-			ReservationConstraints c = new ReservationConstraints(
-					ViewTools.DATE_FORMAT.parse("01.02.2011"), 
-					ViewTools.DATE_FORMAT.parse("01.03.2011"), "Compact");
-		
-			Quote quote = null;
-			while (quote == null){
-				quote = CarRentalModel.get().createQuote(companyName, userName, c);
+			if (!CarRentalModel.get().hasReservations(userName)) {
+				ReservationConstraints c = new ReservationConstraints(
+						ViewTools.DATE_FORMAT.parse("01.02.2011"), 
+						ViewTools.DATE_FORMAT.parse("01.03.2011"), "Compact");
+			
+				final Quote q = CarRentalModel.get().createQuote(companyName, userName, c);
+				CarRentalModel.get().confirmQuote(q);
 			}
-			final Quote q = quote;
-			CarRentalModel.get().confirmQuote(q);
 			
 			resp.sendRedirect(JSPSite.PERSIST_TEST.url());
 		} catch (ParseException e) {

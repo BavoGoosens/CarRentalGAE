@@ -45,8 +45,9 @@ public class CarRentalModel {
 			Set<String> typeNames = new HashSet<String>();
 			Query query = em.createQuery("SELECT crc.cartypes FROM CarRentalCompany crc WHERE crc.name = :name");
 			query.setParameter("name", crcName);
-			List<CarType> result = query.getResultList();
-			for (CarType type: result) {
+			List<HashSet<CarType>> result = query.getResultList();
+			Set<CarType> types = result.get(0);
+			for (CarType type: types) {
 				typeNames.add(type.getName());
 			}
 			return typeNames;

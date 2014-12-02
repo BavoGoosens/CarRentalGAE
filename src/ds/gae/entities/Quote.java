@@ -1,5 +1,6 @@
 package ds.gae.entities;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Entity;
@@ -13,7 +14,7 @@ import javax.persistence.TemporalType;
 import com.google.appengine.api.datastore.Key;
 
 @MappedSuperclass
-public class Quote {
+public class Quote implements Serializable {
 
 	@Temporal(TemporalType.DATE)
     private Date startDate;
