@@ -134,11 +134,10 @@ public class CarRentalModel {
 			Reservation r = crc.confirmQuote(q);
 			trans.commit();
 			return r;
-		} catch (Exception c){
-			System.out.println("ErRoR");
+		} catch(ReservationException e) {
 			trans.rollback();
-			return null;
-		}finally {
+			throw e;
+		} finally {
 			em.close();
 		}	
 	}
@@ -167,8 +166,12 @@ public class CarRentalModel {
 			trans.commit();
 			return res;
 		} catch (Exception c){
-			System.out.println("ErRoR");
-			trans.rollback();
+			System.out.println(c.toString());
+			for (Reservation r: res) {
+				CarRentalCompany crc = em.find(CarRentalCompany.class, r.getRentalCompany());
+				crc.cancelReservation(r);
+			}
+			trans.commit();
 			return null; 
 		}finally {
 			em.close();
