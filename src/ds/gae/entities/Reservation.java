@@ -16,7 +16,6 @@ public class Reservation extends Quote {
             GenerationType.IDENTITY)
 	private Key id;
 	
-	@ManyToOne
     private long carId;
     
     /***************
@@ -55,7 +54,7 @@ public class Reservation extends Quote {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + (int) carId;
+		result = prime * result + (int) this.getCarId();
 		return result;
 	}
 
@@ -64,7 +63,7 @@ public class Reservation extends Quote {
 		if (!super.equals(obj))
 			return false;
 		Reservation other = (Reservation) obj;
-		if (carId != other.carId)
+		if (this.getCarId() != other.getCarId())
 			return false;
 		return true;
 	}

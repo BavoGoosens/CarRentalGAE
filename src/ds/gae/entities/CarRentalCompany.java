@@ -31,7 +31,7 @@ public class CarRentalCompany {
 	@Id
 	private String name;
 	
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@OneToMany(cascade = CascadeType.ALL)
 	private Set<CarType> cartypes = new HashSet<CarType>();
 	
 	/***************
@@ -92,7 +92,7 @@ public class CarRentalCompany {
 	}
 	
 	private CarType getCarTypeByString(String carTypeName) {
-		for(CarType t : this.cartypes){
+		for(CarType t : this.getAllCarTypes()){
 			if (t.getName().equalsIgnoreCase(carTypeName))
 				return t;
 		}
@@ -112,16 +112,7 @@ public class CarRentalCompany {
 	/*********
 	 * CARS *
 	 *********/
-	
-	private Car getCar(Key k) {
-		Set<Car> cars = this.getCars();
-		for (Car c : cars){
-			if (c.getId().equals(k))
-				return c;
-		}
-		throw new IllegalArgumentException("<" + name + "> No car with uid " + k.toString());
-	}
-	
+
 	private Car getCar(long k) {
 		Set<Car> cars = this.getCars();
 		for (Car c : cars){
@@ -133,7 +124,7 @@ public class CarRentalCompany {
 	
 	public Set<Car> getCars() {
 		HashSet<Car> cars = new HashSet<Car>();
-		for (CarType type: this.cartypes){
+		for (CarType type: this.getAllCarTypes()){
 			cars.addAll(type.getCars());
 		}
     	return cars;

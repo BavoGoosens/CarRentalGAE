@@ -26,7 +26,7 @@ public class Car {
 	
     private String type;
 	
-	//@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@OneToMany(cascade = CascadeType.ALL)
     private Set<Reservation> reservations = new HashSet<Reservation>();
 
     /***************
@@ -70,7 +70,7 @@ public class Car {
         if(!start.before(end))
             throw new IllegalArgumentException("Illegal given period");
 
-        for(Reservation reservation : reservations) {
+        for(Reservation reservation : this.getReservations()) {
             if(reservation.getEndDate().before(start) || reservation.getStartDate().after(end))
                 continue;
             return false;
@@ -79,11 +79,11 @@ public class Car {
     }
     
     public void addReservation(Reservation res) {
-        reservations.add(res);
+        this.getReservations().add(res);
     }
     
     public void removeReservation(Reservation reservation) {
         // equals-method for Reservation is required!
-        reservations.remove(reservation);
+        this.getReservations().remove(reservation);
     }
 }

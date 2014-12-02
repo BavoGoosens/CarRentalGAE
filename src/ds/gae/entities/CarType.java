@@ -28,8 +28,8 @@ public class CarType {
     private double rentalPricePerDay;
     //trunk space in liters
     private float trunkSpace;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Car> cars = new ArrayList<Car>();
+    @OneToMany(cascade = CascadeType.ALL)
+    private Set<Car> cars = new HashSet<Car>();
     
     /***************
 	 * CONSTRUCTOR *
@@ -44,11 +44,11 @@ public class CarType {
     }
     
     public Set<Car> getCars(){
-    	return new HashSet<Car>(this.cars);
+    	return this.cars;
     }
     
     public void addCar(Car c){
-    	this.cars.add(c);
+    	this.getCars().add(c);
     }
 
     public String getName() {
@@ -89,7 +89,7 @@ public class CarType {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((this.getName() == null) ? 0 : this.getName().hashCode());
 		return result;
 	}
 

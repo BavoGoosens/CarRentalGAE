@@ -283,8 +283,9 @@ public class CarRentalModel {
 			}
 			Query query = em.createQuery("SELECT t.cars FROM CarType t WHERE t.id = :id");
 			query.setParameter("id", carType.getID());
-			List<Car> res = (List<Car>) query.getResultList().get(0);
-			return res;
+			Set<Car> res = (Set<Car>) query.getResultList().get(0);
+			List<Car> result = new ArrayList<Car>(res);
+			return result;
 		} finally {
 			em.close();
 		}

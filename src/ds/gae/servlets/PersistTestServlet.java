@@ -35,7 +35,11 @@ public class PersistTestServlet extends HttpServlet {
 					ViewTools.DATE_FORMAT.parse("01.02.2011"), 
 					ViewTools.DATE_FORMAT.parse("01.03.2011"), "Compact");
 		
-			final Quote q = CarRentalModel.get().createQuote(companyName, userName, c);
+			Quote quote = null;
+			while (quote == null){
+				quote = CarRentalModel.get().createQuote(companyName, userName, c);
+			}
+			final Quote q = quote;
 			CarRentalModel.get().confirmQuote(q);
 			
 			resp.sendRedirect(JSPSite.PERSIST_TEST.url());

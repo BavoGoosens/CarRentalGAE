@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -59,11 +60,14 @@ public class CarRentalServletContextListener implements ServletContextListener {
 		EntityManager em = EMF.get().createEntityManager();
 		Logger.getLogger(CarRentalServletContextListener.class.getName()).log(Level.INFO, "loading {0} from file {1}", new Object[]{name, datafile});
         try {
+        	EntityTransaction trans = em.getTransaction();
+        	trans.begin();
         	CarRentalCompany company = loadData(name, datafile);
             
     		// FIXME: use persistence instead
             //CarRentalModel.get().CRCS.put(name, company);
             em.persist(company);
+            trans.commit();
 
         } catch (NumberFormatException ex) {
             Logger.getLogger(CarRentalServletContextListener.class.getName()).log(Level.SEVERE, "bad file", ex);

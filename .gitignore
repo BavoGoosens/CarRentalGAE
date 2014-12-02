@@ -232,3 +232,6 @@ pip-log.txt
 out/*
 *.iml/
 *.iml
+
+war/WEB-INF/appengine-generated/
+war/WEB-INF/classes/
