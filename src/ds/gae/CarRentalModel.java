@@ -2,6 +2,7 @@ package ds.gae;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -155,6 +156,47 @@ public class CarRentalModel {
 	 * 			Therefore none of the given quotes is confirmed.
 	 */
 	public List<Reservation> confirmQuotes(List<Quote> quotes) throws ReservationException {  
+		HashMap<String, List<Quote>> companies = new HashMap<String, List<Quote>>();
+		for (Quote quote: quotes) {
+			String crc = quote.getRentalCompany();
+			if (companies.containsKey(crc)) {
+				List<Quote> qs = companies.get(crc);
+				qs.add(quote);
+				companies.put(crc, qs);
+			} else {
+				List<Quote> qs = new ArrayList<Quote>();
+				qs.add(quote);
+				companies.put(crc, qs);
+			}
+		}
+		List<Reservation> reservations = new ArrayList<Reservation>();
+		try {
+			for (List<Quote> qs: companies.values()) {
+				reservations.addAll(this.confirmQuotesForCompany(qs));
+			}
+			return reservations;
+		} catch (ReservationException e) {
+			for (String comp : companies.keySet()){
+				List<Reservation> toBeDeleted = new ArrayList<Reservation>(); 
+				for (Reservation r: reservations){
+					if (r.getRentalCompany().equalsIgnoreCase(comp))
+						toBeDeleted.add(r);
+				}
+				for (Reservation r: toBeDeleted) {
+					EntityManager em = EMF.get().createEntityManager();
+					try {
+						CarRentalCompany crc = em.find(CarRentalCompany.class, r.getRentalCompany());
+						crc.cancelReservation(r);
+					} finally {
+						em.close();
+					}
+				}
+			}
+			throw e;
+		} 
+	}
+	
+	private List<Reservation> confirmQuotesForCompany(List<Quote> quotes) throws ReservationException {
 		List<Reservation> res = new ArrayList<Reservation>();
 		EntityManager em = EMF.get().createEntityManager();
 		EntityTransaction trans = em.getTransaction();
@@ -167,9 +209,8 @@ public class CarRentalModel {
 			trans.commit();
 			return res;
 		} catch (Exception c){
-			for (Reservation r: res) {
-				CarRentalCompany crc = em.find(CarRentalCompany.class, r.getRentalCompany());
-				crc.cancelReservation(r);
+			for (Reservation r: res){
+				em.find(CarRentalCompany.class, r.getRentalCompany()).cancelReservation(r);
 			}
 			trans.commit();
 			throw c;
@@ -236,7 +277,7 @@ public class CarRentalModel {
 		Collection<CarType> out = new ArrayList<CarType>(crc.getAllCarTypes());
 		return out;*/
 	}
-
+	
 	/**
 	 * Get the list of cars of the given car type in the given car rental company.
 	 *
@@ -321,7 +362,7 @@ public class CarRentalModel {
 		EntityManager em = EMF.get().createEntityManager();
 		Collection<Log> log = new ArrayList<Log>();
 		try{
-			Query query = em.createQuery("SELECT l FROM Log l WHERE l.carRenter = :renter");
+			Query query = em.createQuery("SELECT l FROM Log l WHERE l.carRenter = :renter ORDER BY l.date DESC");
 			query.setParameter("renter", carRenter);
 			List<Log> res = query.getResultList();
 			return res;

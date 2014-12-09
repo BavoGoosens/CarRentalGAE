@@ -8,6 +8,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.Text;
 
 @Entity
 public class Log {
@@ -18,9 +19,9 @@ public class Log {
     private Key id;
 	private String carRenter;
 	private Date date;
-	private String description;
+	private Text description;
 	
-	public Log(String carRenter, Date date, String description) {
+	public Log(String carRenter, Date date, Text description) {
 		this.carRenter = carRenter;
 		this.date = date;
 		this.description = description;
@@ -30,7 +31,7 @@ public class Log {
 		return this.date;
 	}
 	
-	public String getDescription() {
+	public Text getDescription() {
 		return this.description;
 	}
 	

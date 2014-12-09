@@ -16,6 +16,7 @@ import javax.servlet.http.HttpSession;
 import com.google.appengine.api.channel.ChannelMessage;
 import com.google.appengine.api.channel.ChannelService;
 import com.google.appengine.api.channel.ChannelServiceFactory;
+import com.google.appengine.api.datastore.Text;
 import com.google.apphosting.utils.config.ClientDeployYamlMaker.Request;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -38,19 +39,26 @@ public class Worker extends HttpServlet {
 
 		Type wow = new TypeToken<ArrayList<Quote>>() {}.getType();
 		ArrayList<Quote> qs = new Gson().fromJson(payload, wow);
-		EntityManager em = EMF.get().createEntityManager();
 		try {
 			CarRentalModel.get().confirmQuotes(qs);
-			for (Quote q : qs){
-				Log lg = new Log(q.getCarRenter(), new Date(), q.toString());
-				em.persist(lg);
+			EntityManager em = EMF.get().createEntityManager();
+			String pretty = "Following quotes successfully confirmed:";
+			for (Quote q: qs) { 
+				pretty += "<br><t>- <strong>" + q.getCarType() + "</strong> (from "+q.getStartDate()+" until "+q.getEndDate()+")";
 			}
-		} catch (ReservationException e) {
-			Log lg = new Log(renter, new Date(), e.getMessage());
+			Log lg = new Log(renter, new Date(), new Text(pretty));
 			em.persist(lg);
-		} finally {
+			em.close();
+		} catch (ReservationException e) {
+			EntityManager em = EMF.get().createEntityManager();
+			String pretty = "Following quotes failed to be confirmed:";
+			for (Quote q: qs) { 
+				pretty += "<br><t>- <strong>" + q.getCarType()+"</strong> (from "+q.getStartDate()+" until "+q.getEndDate()+")";
+			}
+			pretty += "<br>Server responded with following error:<br><i>"+e.getMessage()+"</i>";
+			Log lg = new Log(renter, new Date(), new Text(pretty));
+			em.persist(lg);
 			em.close();
 		}
-
 	}
 }

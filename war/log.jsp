@@ -74,7 +74,7 @@ for (Log log : CarRentalModel.get().getLogForUser(renter)) {
  
  				<tr>
  					<td><%= log.getDate().toString() %></td>
- 					<td><%= log.getDescription() %>
+ 					<td><%= log.getDescription().getValue() %>
  				</tr>		
  
  <% } %>
