@@ -13,6 +13,7 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
 
 import ds.gae.entities.Car;
+import ds.gae.entities.Log;
 import ds.gae.entities.CarRentalCompany;
 import ds.gae.entities.CarType;
 import ds.gae.entities.Quote;
@@ -166,13 +167,12 @@ public class CarRentalModel {
 			trans.commit();
 			return res;
 		} catch (Exception c){
-			System.out.println(c.toString());
 			for (Reservation r: res) {
 				CarRentalCompany crc = em.find(CarRentalCompany.class, r.getRentalCompany());
 				crc.cancelReservation(r);
 			}
 			trans.commit();
-			return null; 
+			throw c;
 		}finally {
 			em.close();
 		}
@@ -316,4 +316,17 @@ public class CarRentalModel {
 	public boolean hasReservations(String renter) {
 		return this.getReservations(renter).size() > 0;		
 	}	
+
+	public Collection<Log> getLogForUser(String carRenter) {
+		EntityManager em = EMF.get().createEntityManager();
+		Collection<Log> log = new ArrayList<Log>();
+		try{
+			Query query = em.createQuery("SELECT l FROM Log l WHERE l.carRenter = :renter");
+			query.setParameter("renter", carRenter);
+			List<Log> res = query.getResultList();
+			return res;
+		} finally {
+			em.close();
+		}
+	}
 }

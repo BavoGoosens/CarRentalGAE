@@ -1,10 +1,17 @@
+<%@page import="java.util.HashMap"%>
+<%@page import="java.util.List"%>
 <%@page import="ds.gae.view.JSPSite"%>
+<%@page import="ds.gae.view.ViewTools"%>
+<%@page import="ds.gae.CarRentalModel"%>
+<%@page import="ds.gae.entities.Quote"%>
+<%@page import="ds.gae.entities.Log"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <% 
+	JSPSite currentSite = JSPSite.LOG;
 	String renter = (String)session.getAttribute("renter");
-	JSPSite currentSite = JSPSite.CONFIRM_QUOTES_RESPONSE;
-
+	HashMap<String, List<Quote>> quotes = (HashMap<String, List<Quote>>)session.getAttribute("quotes"); 
+	boolean anyQuotes = false;
 %>   
  
 <%@include file="_header.jsp" %>
@@ -17,8 +24,6 @@ if (currentSite != JSPSite.LOGIN && currentSite != JSPSite.PERSIST_TEST && rente
   request.getSession().setAttribute("lastSiteCall", currentSite);
 } 
  %>
-<!--  	<meta http-equiv="Refresh" content="1;URL= '/main.jsp'"> -->
- 	
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<link rel="stylesheet" type="text/css" href="style.css" />
 	<title>Car Rental Application</title>
@@ -51,14 +56,38 @@ for (JSPSite site : JSPSite.publiclyLinkedValues()) {
 <%
    }
  %>
-			<div class="frameDiv" style="margin: 150px 150px;">
-				<H2>Reply</H2>
-				<div class="group">
-					<p>
-					Your quotes are being processed, <%=renter%>.
-					</p>
-				</div>
-			</div>
+		<div class="frameDiv">
+		<h2>Log for user: <%= renter %></h2>
+			
+			<h3>Log</h3>
+			
+			<div class="group">
+ 			<table>
+ 				<tr>
+ 					<th>Datetime</th>
+ 					<th>Description</th>
+ 				</tr>
+ 			
+<% 
+for (Log log : CarRentalModel.get().getLogForUser(renter)) {
+ %> <!-- begin of CRC loop -->
+ 
+ 				<tr>
+ 					<td><%= log.getDate().toString() %></td>
+ 					<td><%= log.getDescription() %>
+ 				</tr>		
+ 
+ <% } %>
+ 
+	 		</table>
+	 		</div>
+ 			
+			
+			
+		</div>
 
+		</div>
+		</div>
+
+ 
 <%@include file="_footer.jsp" %>
-
